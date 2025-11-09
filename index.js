@@ -42,11 +42,19 @@ async function run() {
     });
 
     /// course posting
-    app.post("/create-course", async (req, res) => {
+      app.post("/create-course", async (req, res) => {
+        
       const newCourse = req.body;
       const result = await courseCollection.insertOne(newCourse);
       res.send(result);
     });
+      
+      //all course
+      app.get('/course', async (req, res) => {
+          const cursor = courseCollection.find();
+          const result = await cursor.toArray();
+          res.send(result);
+      })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
