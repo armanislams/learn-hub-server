@@ -25,7 +25,8 @@ async function run() {
     await client.connect();
     const db = client.db("learn-hub");
     const usersCollection = db.collection("users");
-    const courseCollection = db.collection("courses");
+      const courseCollection = db.collection("courses");
+      const enrollmentCollection = db.collection('enrollments')
 
     ///users
     app.post("/users", async (req, res) => {
@@ -63,6 +64,26 @@ async function run() {
           console.log(result);
           
           res.send(result);
+      })
+
+      ///enrollments post
+      app.post('/enrollments', async (req, res) => {
+          const { courseId, email } = req.body;
+          const newEnrollment = {
+            courseId,
+            email,
+            enrolledAt: new Date(),
+          };
+          const query = { courseId: courseId, email: email };
+          const enrolled = await enrollmentCollection.findOne(query)
+          if (enrolled) {
+              res.send({message: "Already Enrolled"})
+            } else {
+                const result = await enrollmentCollection.insertOne(newEnrollment)
+                //   res.send(result)
+                console.log(result);
+              
+          }
       })
 
     // Send a ping to confirm a successful connection
