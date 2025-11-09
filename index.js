@@ -85,6 +85,13 @@ async function run() {
               
           }
       })
+      ///enrollment by course id
+      app.get("/enrollments/check", async (req, res) => {
+        const { courseId,email } = req.query;
+        const query = { courseId: courseId , email:email};
+        const result = await enrollmentCollection.findOne(query);
+        res.send({ enrolled: !!result });
+      });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
