@@ -22,11 +22,11 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    client.connect();
     const db = client.db("learn-hub");
     const usersCollection = db.collection("users");
-      const courseCollection = db.collection("courses");
-      const enrollmentCollection = db.collection('enrollments')
+    const courseCollection = db.collection("courses");
+    const enrollmentCollection = db.collection("enrollments");
 
     ///users
     app.post("/users", async (req, res) => {
@@ -43,55 +43,72 @@ async function run() {
     });
 
     /// course posting
-      app.post("/create-course", async (req, res) => {
-        
+    app.post("/create-course", async (req, res) => {
       const newCourse = req.body;
       const result = await courseCollection.insertOne(newCourse);
       res.send(result);
     });
-      
-      //all course
-      app.get('/course', async (req, res) => {
-          const cursor = courseCollection.find();
-          const result = await cursor.toArray();
-          res.send(result);
-      })
-      //course by id
-      app.get('/course/:id', async (req, res) => {
-          const id = req.params.id;
-          const query = { _id: new ObjectId(id) };
-          const result = await courseCollection.findOne(query);
-          console.log(result);
-          
-          res.send(result);
-      })
 
-      ///enrollments post
-      app.post('/enrollments', async (req, res) => {
-          const { courseId, email } = req.body;
-          const newEnrollment = {
-            courseId,
-            email,
-            enrolledAt: new Date(),
-          };
-          const query = { courseId: courseId, email: email };
-          const enrolled = await enrollmentCollection.findOne(query)
-          if (enrolled) {
-              res.send({message: "Already Enrolled"})
-            } else {
-                const result = await enrollmentCollection.insertOne(newEnrollment)
-                //   res.send(result)
-                console.log(result);
-              
-          }
-      })
-      ///enrollment by course id
-      app.get("/enrollments/check", async (req, res) => {
-        const { courseId,email } = req.query;
-        const query = { courseId: courseId , email:email};
-        const result = await enrollmentCollection.findOne(query);
-        res.send({ enrolled: !!result });
-      });
+    //all course
+    app.get("/course", async (req, res) => {
+      const cursor = courseCollection.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+    //course by id
+    app.get("/course/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await courseCollection.findOne(query);
+      console.log(result);
+
+      res.send(result);
+    });
+
+    ///course update
+    app.patch("/course/:id", async (req, res) => {
+      const id = req.params.id;
+      const updatedCourse = req.body;
+      const query = { _id: new ObjectId(id) };
+      const update = {
+        $set: {
+          title: updatedCourse.title,
+          image: updatedCourse.image,
+          price: updatedCourse.price,
+          duration: updatedCourse.duration,
+          category: updatedCourse.category,
+          description: updatedCourse.description,
+        },
+        };
+        const result = await courseCollection.updateOne(query, update)
+        res.send(result)
+    });
+
+    ///enrollments post
+    app.post("/enrollments", async (req, res) => {
+      const { courseId, email } = req.body;
+      const newEnrollment = {
+        courseId,
+        email,
+        enrolledAt: new Date(),
+      };
+      const query = { courseId: courseId, email: email };
+      const enrolled = await enrollmentCollection.findOne(query);
+      if (enrolled) {
+        res.send({ message: "Already Enrolled" });
+      } else {
+        const result = await enrollmentCollection.insertOne(newEnrollment);
+        //   res.send(result)
+        console.log(result);
+      }
+    });
+    ///enrollment by course id
+    app.get("/enrollments/check", async (req, res) => {
+      const { courseId, email } = req.query;
+      const query = { courseId: courseId, email: email };
+      const result = await enrollmentCollection.findOne(query);
+      res.send({ enrolled: !!result });
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
