@@ -45,8 +45,18 @@ async function run() {
     /// course posting
     app.post("/create-course", async (req, res) => {
       const newCourse = req.body;
-      const result = await courseCollection.insertOne(newCourse);
-      res.send(result);
+      const { title } = newCourse;
+      const existingCourse = await courseCollection.findOne({ title });
+      console.log(newCourse);
+
+      if (existingCourse) {
+        return res
+          .status(409)
+          .json({ message: "Course with this title already exists" });
+      } else {
+        const result = await courseCollection.insertOne(newCourse);
+        res.send(result);
+      }
     });
 
     //all course
@@ -79,9 +89,9 @@ async function run() {
           category: updatedCourse.category,
           description: updatedCourse.description,
         },
-        };
-        const result = await courseCollection.updateOne(query, update)
-        res.send(result)
+      };
+      const result = await courseCollection.updateOne(query, update);
+      res.send(result);
     });
 
     ///enrollments post
