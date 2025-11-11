@@ -60,11 +60,15 @@ async function run() {
     });
 
     //all course
-    app.get("/course", async (req, res) => {
-      const cursor = courseCollection.find();
-      const result = await cursor.toArray();
-      res.send(result);
-    });
+      app.get("/course", async (req, res) => {
+          const { instructor } = req.query; 
+          const filter = instructor ? { instructorEmail: instructor } : {};
+
+          const courses = await courseCollection.find(filter).toArray();
+          res.json(courses);
+       
+      });
+
     //course by id
     app.get("/course/:id", async (req, res) => {
       const id = req.params.id;
@@ -77,7 +81,8 @@ async function run() {
           const id = req.params.id
           const query = {_id: new ObjectId(id)}
           const result = await courseCollection.deleteOne(query)
-          res.send(result)
+          const enrollmentDelete = await enrollmentCollection.deleteOne({courseId: query})
+          res.send(result,enrollmentDelete)
       })
 
 
