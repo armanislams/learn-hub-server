@@ -8,7 +8,7 @@ const port = process.env.PORT || 5000;
 ///firebase service acc
 const admin = require("firebase-admin");
 const serviceAccount = require("./learn-hub.json");
-admin.initializeApp({credential: admin.credential.cert(serviceAccount)});
+admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
 
 //middleware
 app.use(cors());
@@ -71,37 +71,47 @@ async function run() {
         res.send(result);
       }
     });
-    app.get('/users/:email', async (req, res) => {
+    app.get('/users/:email',verifyFirebaseToken, async (req, res) => {
       const email = req.params.email
-      const query = {email}
+      const query = { email }
       const result = await usersCollection.findOne(query)
       res.send(result)
     })
     app.delete("/users/:email", verifyFirebaseToken, async (req, res) => {
-        const email = req.params.email;
-        const query = { email};
-        const result = await usersCollection.deleteOne(query);
-        res.send(result);
-      });
+      const email = req.params.email;
+      const query = { email };
+      const result = await usersCollection.deleteOne(query);
+      res.send(result);
+    });
     app.patch("/users/:email/role", verifyFirebaseToken, async (req, res) => {
-        const email = req.params.email;
-        const roleInfo = req.body;
-        const query = {email};
-        const updateDoc = {
-          $set: {
-            role: roleInfo.role,
-          },
-        };
-        const result = await usersCollection.updateOne(query, updateDoc);
-        res.send(result);
-      });
+      const email = req.params.email;
+      const roleInfo = req.body;
+      const query = { email };
+      const updateDoc = {
+        $set: {
+          role: roleInfo.role,
+        },
+      };
+      const result = await usersCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
 
     app.patch("/users/:email", verifyFirebaseToken, async (req, res) => {
       const email = req.params.email;
       const updateData = req.body;
       const query = { email };
-      const user = await usersCollection.updateOne(query, updateData);
-      res.send(user);
+
+      // Build update document with $set operator
+      const updateDoc = {
+        $set: {
+          ...(updateData.name && { name: updateData.name }),
+          ...(updateData.photoURL && { photoURL: updateData.photoURL }),
+          updatedAt: new Date()
+        }
+      };
+
+      const result = await usersCollection.updateOne(query, updateDoc);
+      res.send(result);
     });
     app.get("/users/:email/role", verifyFirebaseToken, async (req, res) => {
       const email = req.params.email;
@@ -134,7 +144,7 @@ async function run() {
     });
 
     //course by id
-    app.get("/course/:id",verifyFirebaseToken, async (req, res) => {
+    app.get("/course/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await courseCollection.findOne(query);
@@ -157,7 +167,7 @@ async function run() {
     });
 
     ///course update
-    app.patch("/course/:id",verifyFirebaseToken, async (req, res) => {
+    app.patch("/course/:id", verifyFirebaseToken, async (req, res) => {
       const id = req.params.id;
       const updatedCourse = req.body;
       const query = { _id: new ObjectId(id) };
@@ -176,7 +186,7 @@ async function run() {
     });
 
     ///enrollments post
-    app.post("/enrollments",  async (req, res) => {
+    app.post("/enrollments", async (req, res) => {
       const { courseId, email } = req.body;
       const newEnrollment = {
         courseId,
